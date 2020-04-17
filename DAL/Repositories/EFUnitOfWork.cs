@@ -3,59 +3,154 @@ using System.Collections.Generic;
 using System.Text;
 using DAL.EF;
 using DAL.Entities;
-using DAL.Interfaces;
+using DAL.Repositories.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DAL.Repositories
 {
     public class EFUnitOfWork : IUnitOfWork
     {
-        private ProductsRepository productsRepository;
-        private ManufacturerRepository  manufacturerRepository;
-        private ProdsOfMansRepository prodsOfMansRepository;
+        private ProductRepository productRepository;
+        private BrandRepository  brandRepository;
+        private ProductByBrandRepository productByBrandRepository;
+        private CategoryRepository categoryRepository;
+        private SubcategoryRepository subcategoryRepository;
+        private ProductByCategoryRepository productByCategory;
+
+        private OrderRepository orderRepository;
+        private OrderItemRepository orderItemRepository;
+        private PaymentRepository paymentRepository;
+
+        private UserRepository userRepository;
 
         private ProductContext db;
+        private UserManager<User> userManager;
+        
 
-        public EFUnitOfWork(DbContextOptions<ProductContext> options)
+        public EFUnitOfWork(DbContextOptions<ProductContext> options, IServiceProvider serviceProvider)
         {
             db = new ProductContext(options);
+            userManager = serviceProvider.GetRequiredService<UserManager<User>>();               
         }
 
-        public  IRepository<Product> ProductsRepository
+        public  IProductRepository ProductRepository
         {
             get
             {
-                if(productsRepository == null)
+                if (productRepository == null)
                 {
-                    productsRepository = new ProductsRepository(db);
-                };
-                return productsRepository;
+                    productRepository = new ProductRepository(db);
+                }
+                return productRepository;
             }
         }
 
-        public IRepository<ProductsOfManufacturer> ProdsOfMansRepository
+        public IRepository<ProductByBrand> ProductByBrandRepository
         {
             get
             {
-                if (prodsOfMansRepository == null)
+                if (productByBrandRepository == null)
                 {
-                    prodsOfMansRepository = new ProdsOfMansRepository(db);
-                };
-                return prodsOfMansRepository;
-
+                    productByBrandRepository = new ProductByBrandRepository(db);
+                }
+                return productByBrandRepository;
             }
         }
 
-        public IRepository<Manufacturer> ManufacturersRepository
+        public IRepository<Brand> BrandRepository
         {
             get
             {
-                if (manufacturerRepository == null)
+                if (brandRepository == null)
                 {
-                    manufacturerRepository = new ManufacturerRepository(db);
-                };
-                return manufacturerRepository;
+                    brandRepository = new BrandRepository(db);
+                }
+                return brandRepository;
+            }
+        }
+        public IRepository<Category> CategoryRepository
+        {
+            get
+            {
+                if (categoryRepository == null)
+                {
+                    categoryRepository = new CategoryRepository(db);
+                }
+                return categoryRepository;
+            }
+        }
+        public IRepository<Subcategory> SubcategoryRepository
+        {
+            get
+            {
+                if (subcategoryRepository == null)
+                {
+                    subcategoryRepository = new SubcategoryRepository(db);
+                }
+                return subcategoryRepository;
+            }
+        }
 
+        public IRepository<ProductByCategory> ProductByCategoryRepository
+        {
+            get
+            {
+                if(productByCategory == null)
+                {
+                    productByCategory = new ProductByCategoryRepository(db);
+                }
+                return productByCategory;
+            }
+        }
+
+        public IUserRepository UserRepostitory
+        {
+            get
+            {
+                if(userRepository == null)
+                {
+                    userRepository = new UserRepository(userManager);
+                }
+                return userRepository;
+            }
+        }
+
+        public IRepository<Order> OrderRepository
+        {
+            get
+            {
+                if (orderRepository == null)
+                {
+                    orderRepository = new OrderRepository(db);
+                }
+                return orderRepository;
+            }
+        }
+
+        public IRepository<OrderItem> OrderItemRepository
+        {
+            get
+            {
+                if(orderItemRepository == null)
+                {
+                    orderItemRepository = new OrderItemRepository(db);
+                }
+                return orderItemRepository;
+            }
+        }
+
+        public IRepository<Payment> PaymentRepository
+        {
+            get
+            {
+                if(paymentRepository == null)
+                {
+                    paymentRepository = new PaymentRepository(db);
+                }
+                return paymentRepository;
             }
         }
 

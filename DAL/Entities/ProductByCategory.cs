@@ -6,9 +6,9 @@ namespace DAL.Entities
 {
     public class ProductByCategory
     {
-        public int Id { get; set; }
-        public int ParentCategoryId { get; set; }
-        public int ChildCategoryId { get; set; }
-        public int ProductId { get; set; }
+        public int Id { get; set; }        
+        public Category Category { get; set; }
+        public Subcategory Subcategory { get; set; }
+        public Product Product { get; set; }
     }
 }

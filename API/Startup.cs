@@ -9,16 +9,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using BLL.Initializer;
-using BLL.Interfaces;
+using BLL.Services.Interfaces;
 using BLL.Services;
 using AutoMapper;
-using BLL.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using BLL.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Primitives;
+using System.IO;
+
 namespace API
 {
     public class Startup
     {
+        
+        
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -26,28 +34,74 @@ namespace API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
 
-            string connectionString = "Server=(localdb)\\mssqllocaldb;Database=productsdb;Trusted_Connection=True;";
+            var path = Directory.GetCurrentDirectory();
+
+            //string connectionString = @"Server=(localdb)\mssqllocaldb;Database=productsdb;Trusted_Connection=True;";
+            string connectionString = $"Data Source=(localdb)\\mssqllocaldb;AttachDbFilename='{path}\\App_Data\\AppDB.mdf';Database=AppDB;Trusted_Connection=True;";
+
             services.DBInit(connectionString);
+            services.AddCors();
 
             var mappingConfig = new MapperConfiguration(mc =>
             {
                 mc.AddProfile(new MappingProfile());
             });
+
+
             IMapper mapper = mappingConfig.CreateMapper();
             services.AddSingleton(mapper);
 
             services.AddMvc();
 
             services.AddTransient<IProductService, ProductServices>();
+            services.AddTransient<ICategoryService, CategoryService>();
+            services.AddTransient<IUserService, UserService>();
+            services.AddTransient<IAccountService, AccountService>();
+            services.AddTransient<IOrderService, OrderService>();
 
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                     .AddJwtBearer(options =>
+                     {
+                         options.RequireHttpsMetadata = false;
+                         options.TokenValidationParameters = new TokenValidationParameters
+                         {                            
+                            ValidateIssuer = true,
+                            ValidIssuer = AuthenticationOptions.ISSUER,
+                            ValidateAudience = true,
+                            ValidAudience = AuthenticationOptions.AUDIENCE,
+                            ValidateLifetime = true,
+                            IssuerSigningKey = AuthenticationOptions.GetSymmetricSecurityKey(),
+                            ValidateIssuerSigningKey = true
+                            
+                         };
+                         options.Events = new JwtBearerEvents
+                         {
+                             OnAuthenticationFailed = context =>
+                             {
+
+                                 if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                                 {
+
+                                     context.Response.Headers.Add("Token-Expired", "true");
+                                 }
+                                 return Task.CompletedTask;
+                             }
+
+                         };
+                         
+                     });
+            services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                .RequireAuthenticatedUser()
+                .Build();
+            });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -55,9 +109,16 @@ namespace API
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
 
+            app.UseCors(builder =>
+            {
+                builder.WithOrigins("http://localhost:4200").WithOrigins("http://192.168.0.102:4200").AllowAnyHeader().AllowCredentials();
+            });
+
+            //app.UseHttpsRedirection();
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

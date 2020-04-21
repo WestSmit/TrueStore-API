@@ -24,12 +24,6 @@ namespace API.Controllers
         {
             return Ok(_productSrvice.GetProduct(id));
         }
-
-        [HttpGet("{id}")]
-        public IEnumerable<ProductModelItem> GetProductsBySubcategory(int id)
-        {
-            return _productSrvice.GetProductsByCategory(id);
-        }
         
         [HttpGet]
         public IEnumerable<CategoryModelItem> GetCategories()
@@ -75,9 +69,15 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Search([FromQuery] ProductParameters parameters)
+        public IActionResult GetSearchOptions([FromQuery] ProductParameters parameters)
         {
-            return Ok(_productSrvice.SearchProduct(parameters));
+            return Ok(_productSrvice.GetSearchOptions(parameters));
+        }
+
+        [HttpGet]
+        public IActionResult GetProducts([FromQuery] ProductParameters parameters)
+        {
+            return Ok(_productSrvice.GetProducts(parameters));
         }
     }
 }

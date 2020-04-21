@@ -8,6 +8,7 @@ namespace BLL.Models.Product
     {
         public int SubcategoryId { get; set; }
         public string SearchString { get; set; }
+        public int BrandId { get; set; }
 
     }
 }

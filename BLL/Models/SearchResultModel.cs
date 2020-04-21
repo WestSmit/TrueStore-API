@@ -9,5 +9,8 @@ namespace BLL.Models
     {
         public IEnumerable<SubcategoryModelItem> Subcategories { get; set; }
         public IEnumerable<ProductModelItem> Products { get; set; }
+        public IEnumerable<BrandModelItem> Brands { get; set; }
+
+        
     }
 }

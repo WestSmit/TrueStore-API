@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace DAL.Repositories.Interfaces
@@ -8,7 +9,7 @@ namespace DAL.Repositories.Interfaces
     {
         IEnumerable<T> GetAll();
         T Get(int id);
-        IEnumerable<T> Find(Func<T, Boolean> predicate);
+        IEnumerable<T> Find(Expression<Func<T, bool>> predicate);
         void Create(T item);
         void Update(T item);
         void Delete(int id);

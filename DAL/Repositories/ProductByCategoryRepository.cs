@@ -4,6 +4,8 @@ using DAL.Repositories.Interfaces;
 using DAL.Entities;
 using DAL.EF;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace DAL.Repositories
 {
@@ -35,9 +37,13 @@ namespace DAL.Repositories
             }
         }
 
-        public IEnumerable<ProductByCategory> Find(Func<ProductByCategory, bool> predicate)
+        public IEnumerable<ProductByCategory> Find(Expression<Func<ProductByCategory, bool>> predicate)
         {
-            return db.ProductsByCategories.Where(predicate);
+            return db.ProductsByCategories
+                .Where(predicate)
+                .Include(p=> p.Product)
+                .Include(p=>p.Subcategory)
+                .Include(p=>p.Category);
         }
 
         public ProductByCategory Get(int id)

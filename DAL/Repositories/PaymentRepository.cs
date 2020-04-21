@@ -4,6 +4,7 @@ using DAL.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace DAL.Repositories
@@ -35,7 +36,7 @@ namespace DAL.Repositories
             }
         }
 
-        public IEnumerable<Payment> Find(Func<Payment, bool> predicate)
+        public IEnumerable<Payment> Find(Expression<Func<Payment, bool>> predicate)
         {
             return db.Payments.Where(predicate).ToList();
         }

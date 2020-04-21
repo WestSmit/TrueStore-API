@@ -6,6 +6,7 @@ using DAL.Repositories.Interfaces;
 using DAL.Entities;
 using DAL.EF;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace DAL.Repositories
 {
@@ -39,7 +40,7 @@ namespace DAL.Repositories
             }
         }
 
-        public IEnumerable<Brand> Find(Func<Brand, bool> predicate)
+        public IEnumerable<Brand> Find(Expression<Func<Brand, bool>> predicate)
         {
             return db.Brands.Where(predicate).ToList();
         }

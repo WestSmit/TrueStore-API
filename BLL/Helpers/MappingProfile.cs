@@ -10,15 +10,13 @@ namespace BLL.Helpers
     {
         public MappingProfile()
         {
-            CreateMap<Product, ProductModelItem>();
-            CreateMap<ProductModelItem, Product>();
-            CreateMap<Category,  CategoryModelItem>();
-            CreateMap<CategoryModelItem,  Category>();
-            CreateMap<Subcategory,  SubcategoryModelItem>();
-            CreateMap<SubcategoryModelItem,  Subcategory>();
+            CreateMap<Product, ProductModelItem>().ReverseMap();
+            CreateMap<Category,  CategoryModelItem>().ReverseMap();
+            CreateMap<Subcategory,  SubcategoryModelItem>().ReverseMap();
             CreateMap<User, UserModel>();
             CreateMap<UserModel, User>().ForMember(dest => dest.Id, opt => opt.UseDestinationValue());
             CreateMap<OrderItem, OrderItemModel>().ForMember(dest => dest.Currency, opt => opt.MapFrom(src => src.Currency.ToString()));
+            CreateMap<Brand, BrandModelItem>();
     
         }
     }

@@ -5,6 +5,7 @@ using DAL.Repositories.Interfaces;
 using DAL.Entities;
 using DAL.EF;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace DAL.Repositories
 {
@@ -34,7 +35,7 @@ namespace DAL.Repositories
             }
         }
 
-        public IEnumerable<OrderItem> Find(Func<OrderItem, bool> predicate)
+        public IEnumerable<OrderItem> Find(Expression<Func<OrderItem, bool>> predicate)
         {
             return db.OrderItems.Where(predicate).ToList();
         }

@@ -36,7 +36,6 @@ namespace API
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
 
             var path = Directory.GetCurrentDirectory();
 

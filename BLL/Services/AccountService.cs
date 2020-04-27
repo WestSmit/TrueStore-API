@@ -35,7 +35,7 @@ namespace BLL.Services
             emailSender.SendEmail(user.Email, 
                 "Confirm your email changing...",
                 $"<h3>To confirm the change  your email click " +
-                $"<a href='http://192.168.0.102:50395/api/Account/ConfirmEmailChanging?userId={userId}&newEmail={newEmail}&token={token}'>here</a></h3>");
+                $"<a href='https://localhost:44372/api/Account/ConfirmEmailChanging?userId={userId}&newEmail={newEmail}&token={token}'>here</a></h3>");
         }
 
         public LoginResultModel ChangeEmail(string userId, string newEmail, string token)

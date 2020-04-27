@@ -69,13 +69,13 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetSearchOptions([FromQuery] ProductParameters parameters)
+        public IActionResult GetSearchOptions([FromQuery] FilteringParameters parameters)
         {
             return Ok(_productSrvice.GetSearchOptions(parameters));
         }
 
         [HttpGet]
-        public IActionResult GetProducts([FromQuery] ProductParameters parameters)
+        public IActionResult GetProducts([FromQuery] FilteringParameters parameters)
         {
             return Ok(_productSrvice.GetProducts(parameters));
         }

@@ -9,7 +9,7 @@ namespace BLL.Services.Interfaces
         ProductModelItem GetProduct(int id);
         IEnumerable<ProductModelItem> GetProductsByCategory(int subcategoryId);
         void CreateProduct(ProductModelItem productModelItem);
-        SearchResultModel GetSearchOptions(ProductParameters parameters);
-        SearchResultModel GetProducts(ProductParameters parameters);
+        FilteringResultModel GetSearchOptions(FilteringParameters parameters);
+        FilteringResultModel GetProducts(FilteringParameters parameters);
     }
 }

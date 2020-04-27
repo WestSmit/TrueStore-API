@@ -65,7 +65,7 @@ namespace BLL.Services
             }
         }
 
-        public SearchResultModel GetSearchOptions(ProductParameters parameters)
+        public FilteringResultModel GetSearchOptions(FilteringParameters parameters)
         {
             List<Product> items = new List<Product>();
             List<Subcategory> subcategories = new List<Subcategory>();
@@ -76,67 +76,35 @@ namespace BLL.Services
                 subcategories = _database.SubcategoryRepository.Find(item => item.Name.ToUpper().Contains(parameters.SearchString.ToUpper())).ToList();
             }
 
-            SearchResultModel result = new SearchResultModel();
+            FilteringResultModel result = new FilteringResultModel();
             result.Products = _mapper.Map<IEnumerable<ProductModelItem>>(items);
             result.Subcategories = _mapper.Map<IEnumerable<SubcategoryModelItem>>(subcategories);
             result.Successed = true;
             return result;
         }
 
-        public SearchResultModel GetProducts(ProductParameters parameters)
+        public FilteringResultModel GetProducts(FilteringParameters parameters)
         {
             List<Product> items = new List<Product>();
             List<Subcategory> subcategories = new List<Subcategory>();
             List<Brand> brands = new List<Brand>();
+            FilteringResultModel result = new FilteringResultModel();
 
             if (parameters.SubcategoryId != 0)
             {
                 items = _database.ProductRepository.GetProductsByCategory(parameters.SubcategoryId).ToList();
-                if (parameters.SearchString != null)
+                if (!String.IsNullOrEmpty(parameters.SearchString))
                 {
-                    items = items.Where(item => item.Name.ToUpper().Contains(parameters.SearchString.ToUpper())).ToList();
-                    if (parameters.BrandId != 0)
-                    {
-                        items = _database.ProductByBrandRepository
-                            .Find(item => items.Contains(item.Product) && item.Brand.Id == parameters.BrandId)
-                            .Select(i => i.Product)
-                            .ToList();
-                    }
-                }
-                else
-                {
-                    if (parameters.BrandId != 0)
-                    {
-                        items = _database.ProductByBrandRepository
-                            .Find(item => items.Contains(item.Product) && item.Brand.Id == parameters.BrandId)
-                            .Select(i => i.Product)
-                            .ToList();
-                    }
+                    items = items.Where(item => item.Name.ToUpper()
+                    .Contains(parameters.SearchString.ToUpper())).ToList();
                 }
             }
             else
             {
-                if (parameters.SearchString != null)
+                if (!String.IsNullOrEmpty(parameters.SearchString))
                 {
-                    items = _database.ProductRepository.Find(item => item.Name.ToUpper().Contains(parameters.SearchString.ToUpper())).ToList();
-
-                    if (parameters.BrandId != 0)
-                    {
-                        items = _database.ProductByBrandRepository
-                            .Find(item => items.Contains(item.Product) && item.Brand.Id == parameters.BrandId)
-                            .Select(i => i.Product)
-                            .ToList();
-                    }
-                }
-                else
-                {
-                    if (parameters.BrandId != 0)
-                    {
-                        items = _database.ProductByBrandRepository
-                            .Find(item => items.Contains(item.Product) && item.Brand.Id == parameters.BrandId)
-                            .Select(i => i.Product)
-                            .ToList();
-                    }
+                    items = _database.ProductRepository.Find(item => item.Name.ToUpper()
+                    .Contains(parameters.SearchString.ToUpper())).ToList();
                 }
             }
 
@@ -154,8 +122,53 @@ namespace BLL.Services
                     brands.Add(brand);
                 }
             }
+            result.MaxPrice = items.Max(x => x.Price);
+            result.MinPrice = items.Min(x => x.Price);
 
-            SearchResultModel result = new SearchResultModel();
+            //Filtering by selected brands
+            if (!String.IsNullOrEmpty(parameters.Brands))
+            {
+                var selectedBrands = parameters.Brands.Split(';').Select(x => Int32.Parse(x));
+                items = _database.ProductByBrandRepository
+                    .Find(item => items.Contains(item.Product) && selectedBrands.Contains(item.Brand.Id))
+                    .Select(i => i.Product)
+                    .ToList();
+                result.SelectedBrands = selectedBrands.ToArray();
+            }
+
+
+            if (parameters.MaxPrice != 0)
+            {
+                items = items.Where(p => p.Price <= parameters.MaxPrice).ToList();
+                result.SetMaxPrice = parameters.MaxPrice;               
+            }
+            else
+            {
+                result.SetMaxPrice = result.MaxPrice;
+            }
+            if (parameters.MinPrice != 0)
+            {
+                items = items.Where(p => p.Price >= parameters.MinPrice).ToList();
+                result.SetMinPrice = parameters.MinPrice;
+            }
+            else
+            {
+                result.SetMinPrice = result.MinPrice;
+            }
+
+            //Sorting
+            switch (parameters.Sort)
+            {
+                case "price_asce":
+                    items = items.OrderBy(x => x.Price).ToList();
+                    break;
+                case "price_desc":
+                    items = items.OrderByDescending(x => x.Price).ToList();
+                    break;
+                default:
+                    break;
+            }
+
             result.Products = _mapper.Map<IEnumerable<ProductModelItem>>(items);
             result.Subcategories = _mapper.Map<IEnumerable<SubcategoryModelItem>>(subcategories);
             result.Brands = _mapper.Map<IEnumerable<BrandModelItem>>(brands);

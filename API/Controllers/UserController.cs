@@ -48,20 +48,23 @@ namespace API.Controllers
         [HttpPost]
         public IActionResult Registration([FromBody] UserModel user)
         {
-
-            _userService.UserRegistration(user);
-            if (ModelState.IsValid)
+            BaseModel result = new BaseModel();
+            try
             {
-                return Ok();
+                _userService.UserRegistration(user);
+                result.Successed = true;
+                result.Message = "Welcome!!!";
             }
-            else
+            catch(Exception e)
             {
-                return BadRequest(ModelState.ToString());
+                result.Successed = false;
+                result.Message = e.Message;
             }
+            return Ok(result);
         }
 
         [HttpGet]
-        public IActionResult ConfirmEmail([FromQuery(Name = "userId")] string userId, [FromQuery(Name = "token")] string token )
+        public IActionResult ConfirmEmail([FromQuery(Name = "userId")] string userId, [FromQuery(Name = "token")] string token)
         {
             _userService.ConfirmUserEmail(userId, token);
 
@@ -101,7 +104,7 @@ namespace API.Controllers
                 return StatusCode(403);
             }
         }
-      
+
 
 
     }

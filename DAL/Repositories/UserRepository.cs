@@ -22,6 +22,7 @@ namespace DAL.Repositories
             if (user.Result == null)
             {
                 throw new Exception("Invalid Username or Password");
+                
             }
 
             var result = _userManager.CheckPasswordAsync(user.Result, password);
@@ -39,12 +40,14 @@ namespace DAL.Repositories
             var result = _userManager.CreateAsync(user, password);
             if (!result.Result.Succeeded)
             {
-                throw new Exception(result.ToString());
+                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
+                throw new Exception(message);
             }
             var result2 = _userManager.AddToRoleAsync(user, "User");
             if (!result2.Result.Succeeded)
             {
-                throw new Exception(result2.ToString());
+                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
+                throw new Exception(message);
             }
             return user;
         }
@@ -60,21 +63,15 @@ namespace DAL.Repositories
             var result = _userManager.ConfirmEmailAsync(user, token.Replace(' ', '+'));
             if (!result.Result.Succeeded)
             {
-                StringBuilder errors = new StringBuilder();
-                foreach (var error in result.Result.Errors)
-                {
-                    errors.Append(error.Code);
-                    errors.Append(": ");
-                    errors.Append(error.Description);
-                    errors.Append("\n");
-                }
-                throw new Exception(errors.ToString());
+                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
+                throw new Exception(message);
             }
         }
 
         public bool HasValidRefreshToken(string userId)
         {
-            if (DateTime.Now < _userManager.Users.Single(u => u.Id == userId).ActualTokenLastDate)
+            var user = _userManager.FindByIdAsync(userId).Result;
+            if (DateTime.Now < user.ActualTokenLastDate)
             {
                 return true;
             }
@@ -97,7 +94,8 @@ namespace DAL.Repositories
             var result = _userManager.UpdateAsync(user);
             if (!result.Result.Succeeded)
             {
-                throw new Exception("user is not updated");
+                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
+                throw new Exception(message);
             }
         }
 
@@ -106,7 +104,6 @@ namespace DAL.Repositories
             var result = _userManager.FindByIdAsync(userId);
             if (result.Result != null)
             {
-
                 return result.Result;
             }
             else
@@ -141,7 +138,8 @@ namespace DAL.Repositories
             var result = _userManager.UpdateAsync(_user);
             if (!result.Result.Succeeded)
             {
-                throw new Exception("User is not updated");
+                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
+                throw new Exception(message);
             }
             else
             {
@@ -164,15 +162,8 @@ namespace DAL.Repositories
             }
             else
             {
-                StringBuilder errors = new StringBuilder();
-                foreach (var error in result.Result.Errors)
-                {
-                    errors.Append(error.Code);
-                    errors.Append(": ");
-                    errors.Append(error.Description);
-                    errors.Append("\n");
-                }
-                throw new Exception(errors.ToString());
+                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
+                throw new Exception(message);
             }
         }
 
@@ -196,7 +187,8 @@ namespace DAL.Repositories
             var result = _userManager.ChangePasswordAsync(_user, currentPassword, newPassword);
             if (!result.Result.Succeeded)
             {
-                throw new Exception("Password is not changed");
+                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
+                throw new Exception(message);
             }
         }
     }

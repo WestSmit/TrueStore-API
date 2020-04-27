@@ -8,6 +8,8 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using AutoMapper;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http.Features;
+using System.Net;
 
 namespace BLL.Services
 {
@@ -26,11 +28,11 @@ namespace BLL.Services
             var newUser = _mapper.Map<User>(user);
             User createdUser = _database.UserRepostitory.CreateUser(newUser, user.Password);
 
-             var token = _database.UserRepostitory.GenereteEmailConfirmToken(createdUser);
+            var token = _database.UserRepostitory.GenereteEmailConfirmToken(createdUser);
 
             EmailSender emailSender = new EmailSender();
 
-            emailSender.SendEmail(user.Email, "Confirm your account", $"<h3>To confirm your email address click \" <a href='http://192.168.0.102:50395/api/User/ConfirmEmail?userId={createdUser.Id}&token={token}'>link</a></h3>");
+            emailSender.SendEmail(user.Email, "Confirm your account", $"<h3>To confirm your email address click \" <a href='https://localhost:44372/api/User/ConfirmEmail?userId={createdUser.Id}&token={token}'>link</a></h3>");
         }
 
         public void ConfirmUserEmail(string userId, string token)

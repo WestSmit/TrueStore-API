@@ -10,6 +10,7 @@ using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http.Features;
 using System.Net;
+using Microsoft.AspNetCore.Http;
 
 namespace BLL.Services
 {
@@ -31,7 +32,6 @@ namespace BLL.Services
             var token = _database.UserRepostitory.GenereteEmailConfirmToken(createdUser);
 
             EmailSender emailSender = new EmailSender();
-
             emailSender.SendEmail(user.Email, "Confirm your account", $"<h3>To confirm your email address click \" <a href='https://localhost:44372/api/User/ConfirmEmail?userId={createdUser.Id}&token={token}'>link</a></h3>");
         }
 

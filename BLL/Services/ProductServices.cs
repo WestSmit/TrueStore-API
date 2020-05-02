@@ -169,6 +169,36 @@ namespace BLL.Services
                     break;
             }
 
+            //Pagination
+            result.TotalPages = items.Count / 8;
+            int surplus = items.Count % 8;
+            if (surplus > 0)            {
+                result.TotalPages++;
+            }
+            else
+            {
+                surplus = 8;
+            }
+            result.TotalItems = items.Count;
+            if (parameters.Page <= result.TotalPages && parameters.Page != 0)
+            {
+                int indexFirstItems = (parameters.Page - 1) * 8;
+                if(parameters.Page != result.TotalPages)
+                {
+                    items = items.GetRange(indexFirstItems, 8);
+                }
+                else
+                {
+                    items = items.GetRange(indexFirstItems, surplus);
+                }
+                result.Page = parameters.Page;
+            }
+            else
+            {
+                items = items.GetRange(0, 8);
+                result.Page = 1;
+            }
+
             result.Products = _mapper.Map<IEnumerable<ProductModelItem>>(items);
             result.Subcategories = _mapper.Map<IEnumerable<SubcategoryModelItem>>(subcategories);
             result.Brands = _mapper.Map<IEnumerable<BrandModelItem>>(brands);

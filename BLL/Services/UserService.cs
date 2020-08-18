@@ -11,6 +11,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http.Features;
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace BLL.Services
 {
@@ -24,15 +26,20 @@ namespace BLL.Services
             _mapper = mapper;
         }
 
-        public void UserRegistration(UserModel user)
+        public async Task<IdentityResult> UserRegistration(UserModel user)
         {
             var newUser = _mapper.Map<User>(user);
-            User createdUser = _database.UserRepostitory.CreateUser(newUser, user.Password);
+            var result = await _database.UserRepostitory.CreateUser(newUser, user.Password);
 
-            var token = _database.UserRepostitory.GenereteEmailConfirmToken(createdUser);
+            if (result.Succeeded)
+            {
+                var token = _database.UserRepostitory.GenereteEmailConfirmToken(newUser);
+                EmailSender emailSender = new EmailSender();
+                emailSender.SendEmail(user.Email, "Confirm your account",
+                    $"<h3>To confirm your email address click \" <a href='http://localhost:5000/api/User/ConfirmEmail?userId={newUser.Id}&token={token}'>link</a></h3>");
+            }
 
-            EmailSender emailSender = new EmailSender();
-            emailSender.SendEmail(user.Email, "Confirm your account", $"<h3>To confirm your email address click \" <a href='https://localhost:44372/api/User/ConfirmEmail?userId={createdUser.Id}&token={token}'>link</a></h3>");
+            return result;
         }
 
         public void ConfirmUserEmail(string userId, string token)
@@ -40,54 +47,61 @@ namespace BLL.Services
             _database.UserRepostitory.ConfirmEmail(userId, token);
         }
 
-        public LoginResultModel UserAuthentication(string userName, string password)
+        public async Task<bool> UserAuthentication(string username, string password)
         {
-            var user = _database.UserRepostitory.ValidateUser(userName, password);
-            return UpdateTokens(user.Id);
-        }
+            var user = await _database.UserRepostitory.GetUserByName(username);
 
-        public LoginResultModel UpdateTokens(string userId)
-        {
-            var user = _database.UserRepostitory.GetUser(userId);
-            if (user != null)
+            if (user == null)
             {
-                DateTime timeNow = DateTime.UtcNow;
+                return false;
+            }
 
-                UserModel userModel = _mapper.Map<UserModel>(user);
+            var result = await _database.UserRepostitory.ValidateUser(user, password);
 
-                userModel.Role = _database.UserRepostitory.GetRole(user);
+            return result;
+        }
+        public async Task<LoginResultModel> UpdateTokensByUsername(string username)
+        {
+            var user = await _database.UserRepostitory.GetUserByName(username);
 
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var tokenDescriptor = new SecurityTokenDescriptor
+            return await UpdateTokens(user.Id);
+        }
+        public async Task<LoginResultModel> UpdateTokens(string userId)
+        {
+            var user = await _database.UserRepostitory.GetUser(userId);
+            DateTime timeNow = DateTime.UtcNow;
+
+            UserModel userModel = _mapper.Map<UserModel>(user);
+
+            userModel.Role = _database.UserRepostitory.GetRole(user);
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
                 {
-                    Subject = new ClaimsIdentity(new Claim[]
-                    {
                         new Claim(ClaimTypes.Name, userModel.Id.ToString()),
                         new Claim(ClaimTypes.Role, userModel.Role)
-                    }),
-                    Issuer = AuthenticationOptions.ISSUER,
-                    Audience = AuthenticationOptions.AUDIENCE,
-                    NotBefore = timeNow,
-                    Expires = timeNow.Add(TimeSpan.FromMinutes(AuthenticationOptions.LIFETIME)),
-                    SigningCredentials = new SigningCredentials(AuthenticationOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256Signature)
-                };
+                }),
+                Issuer = AuthenticationOptions.ISSUER,
+                Audience = AuthenticationOptions.AUDIENCE,
+                NotBefore = timeNow,
+                Expires = timeNow.Add(TimeSpan.FromMinutes(AuthenticationOptions.LIFETIME)),
+                SigningCredentials = new SigningCredentials(AuthenticationOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256Signature)
+            };
 
-                var jwt = tokenHandler.CreateToken(tokenDescriptor);
-               
-                var refreshToken = TokenGenerator.Generate().Trim();
+            var jwt = tokenHandler.CreateToken(tokenDescriptor);
 
-                LoginResultModel result = new LoginResultModel();
-                result.User = userModel;
-                result.AccessToken = tokenHandler.WriteToken(jwt);
-                result.RefreshToken = refreshToken;
+            var refreshToken = TokenGenerator.Generate().Trim();
 
-                _database.UserRepostitory.SetRefreshToken(user, refreshToken);
-                return result;
-            }
-            else
-            {
-                return null;
-            }
+            LoginResultModel result = new LoginResultModel();
+            result.User = userModel;
+            result.AccessToken = tokenHandler.WriteToken(jwt);
+            result.RefreshToken = refreshToken;
+
+            _database.UserRepostitory.SetRefreshToken(user, refreshToken);
+            return result;
+
         }
 
         public bool VerifyRefreshToken(string userId, string token)

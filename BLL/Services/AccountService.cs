@@ -27,15 +27,15 @@ namespace BLL.Services
             return result;
         }
 
-        public void TryEmailChanging(string userId, string newEmail)
+        public async void TryEmailChanging(string userId, string newEmail)
         {
-            var user = _database.UserRepostitory.GetUser(userId);
+            var user = await _database.UserRepostitory.GetUser(userId);
             var token = _database.UserRepostitory.GenereteEmailChangingToken(userId, newEmail);
             EmailSender emailSender = new EmailSender();
             emailSender.SendEmail(user.Email, 
                 "Confirm your email changing...",
                 $"<h3>To confirm the change  your email click " +
-                $"<a href='https://localhost:44372/api/Account/ConfirmEmailChanging?userId={userId}&newEmail={newEmail}&token={token}'>here</a></h3>");
+                $"<a href='http://localhost:5000/api/Account/ConfirmEmailChanging?userId={userId}&newEmail={newEmail}&token={token}'>here</a></h3>");
         }
 
         public LoginResultModel ChangeEmail(string userId, string newEmail, string token)

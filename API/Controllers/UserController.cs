@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using BLL.Services.Interfaces;
 using BLL.Models;
 using Microsoft.Extensions.Primitives;
+using System.Threading.Tasks;
 
 namespace API.Controllers
 {
@@ -21,46 +22,31 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login([FromBody] LoginModel login)
+        public async Task<IActionResult> Login([FromBody] LoginModel login)
         {
-            var resultModel = new LoginResultModel();
-
-            try
+            var res = await _userService.UserAuthentication(login.UserName, login.Password);
+            if (res)
             {
-                resultModel = _userService.UserAuthentication(login.UserName, login.Password);
-                resultModel.Successed = true;
-                resultModel.Message = "Authorized";
-
+                var resultModel = await _userService.UpdateTokensByUsername(login.UserName);
                 HttpContext.Response.Cookies.Append("UserId", resultModel.User.Id);
                 HttpContext.Response.Cookies.Append("AccessToken", resultModel.AccessToken);
                 HttpContext.Response.Cookies.Append("RefreshToken", resultModel.RefreshToken);
                 HttpContext.Response.Headers.Add("Token-Expired", "false");
-            }
-            catch (Exception e)
-            {
-                resultModel.Successed = false;
-                resultModel.Message = e.Message;
+                return Ok(resultModel);
             }
 
-            return Ok(resultModel);
+            return Unauthorized();
         }
 
         [HttpPost]
-        public IActionResult Registration([FromBody] UserModel user)
+        public async Task<IActionResult> Registration([FromBody] UserModel user)
         {
-            BaseModel result = new BaseModel();
-            try
+            var result = await _userService.UserRegistration(user);
+            if (result.Succeeded)
             {
-                _userService.UserRegistration(user);
-                result.Successed = true;
-                result.Message = "Welcome!!!";
+                return Ok();
             }
-            catch(Exception e)
-            {
-                result.Successed = false;
-                result.Message = e.Message;
-            }
-            return Ok(result);
+            return BadRequest(result.Errors);
         }
 
         [HttpGet]
@@ -72,7 +58,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public IActionResult RefreshToken()
+        public async Task<IActionResult> RefreshToken()
         {
             StringValues valueUserId;
             HttpContext.Request.Headers.TryGetValue("UserId", out valueUserId);
@@ -86,7 +72,7 @@ namespace API.Controllers
 
                 if (_userService.VerifyRefreshToken(userId, refreshToken))
                 {
-                    var resultModel = _userService.UpdateTokens(userId);
+                    var resultModel = await _userService.UpdateTokens(userId);
                     HttpContext.Response.Cookies.Append("UserId", resultModel.User.Id);
                     HttpContext.Response.Cookies.Append("AccessToken", resultModel.AccessToken);
                     HttpContext.Response.Cookies.Append("RefreshToken", resultModel.RefreshToken);

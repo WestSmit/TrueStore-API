@@ -10,7 +10,7 @@ namespace BLL.Helpers
         {
             var emailMessage = new MimeMessage();
 
-            emailMessage.From.Add(new MailboxAddress("TrueStore", "mypetproject404"));
+            emailMessage.From.Add(new MailboxAddress("TrueStore", "mypetproject404@gmail.com"));
             emailMessage.To.Add(new MailboxAddress("", email));
             emailMessage.Subject = subject;
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
@@ -20,9 +20,8 @@ namespace BLL.Helpers
 
             using (var client = new SmtpClient())
             {
-                client.Connect("smtp.gmail.com", 587, false);
-               
-                client.Authenticate("mypetproject404", "superpassword");
+                client.Connect("smtp.gmail.com", 587, false);               
+                client.Authenticate("mypetproject404@gmail.com", "superpassword");
                 client.Send(emailMessage);
                 client.Disconnect(true);
             }

@@ -1,19 +1,22 @@
 ﻿using DAL.Entities;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace DAL.Repositories.Interfaces
 {
     public interface IUserRepository
-    {        
-        User CreateUser(User user, string password); // return UserId       
-        User ValidateUser(string userName, string password);
+    {
+        Task<IdentityResult> CreateUser(User user, string password);
+        Task<bool> ValidateUser(User user, string password);
+        Task<User> GetUserByName(string username);
         bool HasValidRefreshToken(string userId);
         void SetRefreshToken(User user, string token);
         string GetRefreshToken(string UserId);
-        User GetUser(string userId);
+        Task<User> GetUser(string userId);
         string GetRole(User user);
         User Update(User user);
         User ChangeEmail(string userId, string newEmail, string token);

@@ -28,12 +28,14 @@ namespace DAL.Repositories
 
         private ProductContext db;
         private UserManager<User> userManager;
+        private SignInManager<User> signInManager;
         
 
         public EFUnitOfWork(DbContextOptions<ProductContext> options, IServiceProvider serviceProvider)
         {
             db = new ProductContext(options);
-            userManager = serviceProvider.GetRequiredService<UserManager<User>>();               
+            userManager = serviceProvider.GetRequiredService<UserManager<User>>();
+            signInManager = serviceProvider.GetRequiredService<SignInManager<User>>();
         }
 
         public  IProductRepository ProductRepository
@@ -112,7 +114,7 @@ namespace DAL.Repositories
             {
                 if(userRepository == null)
                 {
-                    userRepository = new UserRepository(userManager);
+                    userRepository = new UserRepository(userManager, signInManager);
                 }
                 return userRepository;
             }

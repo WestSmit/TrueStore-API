@@ -4,52 +4,35 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace DAL.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private UserManager<User> _userManager;
-        public UserRepository(UserManager<User> userManager)
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        public UserRepository(UserManager<User> userManager, SignInManager<User> signInManager)
         {
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
-        public User ValidateUser(string userName, string password)
+        public async Task<User> GetUserByName(string username)
         {
-            var user = _userManager.FindByNameAsync(userName);
-
-            if (user.Result == null)
-            {
-                throw new Exception("Invalid Username or Password");
-                
-            }
-
-            var result = _userManager.CheckPasswordAsync(user.Result, password);
-
-            if (result.Result != true)
-            {
-                throw new Exception("Invalid Username or Password");
-            }
-            return user.Result;
+            return await _userManager.FindByNameAsync(username);
         }
 
-        public User CreateUser(User user, string password)
+        public async Task<bool> ValidateUser(User user, string password)
         {
+            var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
 
-            var result = _userManager.CreateAsync(user, password);
-            if (!result.Result.Succeeded)
-            {
-                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
-                throw new Exception(message);
-            }
-            var result2 = _userManager.AddToRoleAsync(user, "User");
-            if (!result2.Result.Succeeded)
-            {
-                var message = new StringBuilder().AppendJoin(';', result.Result.Errors.Select(e => e.Description)).ToString();
-                throw new Exception(message);
-            }
-            return user;
+            return result.Succeeded;
+        }
+
+        public async Task<IdentityResult> CreateUser(User user, string password)
+        {
+            return await _userManager.CreateAsync(user, password);
         }
 
         public string GenereteEmailConfirmToken(User user)
@@ -99,12 +82,12 @@ namespace DAL.Repositories
             }
         }
 
-        public User GetUser(string userId)
+        public async Task<User> GetUser(string userId)
         {
-            var result = _userManager.FindByIdAsync(userId);
-            if (result.Result != null)
+            var result = await _userManager.FindByIdAsync(userId);
+            if (result != null)
             {
-                return result.Result;
+                return result;
             }
             else
             {
